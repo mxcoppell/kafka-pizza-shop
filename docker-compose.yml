@@ -1,0 +1,105 @@
+services:
+  # Kafka Broker running in KRaft mode (no Zookeeper required)
+  # KRaft replaced Zookeeper as Kafka's consensus protocol
+  kafka:
+    image: confluentinc/cp-kafka:7.7.0
+    container_name: pizza-shop-kafka
+    hostname: kafka
+    ports:
+      # 9092 - Internal Docker network communication
+      # 9093 - External access from host machine
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      # KRaft mode configuration
+      # Process roles: 'broker' for broker-only, 'controller' for controller-only, 'broker,controller' for combined mode
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_NODE_ID: 1
+
+      # Controller configuration for KRaft
+      # Format: node_id@host:port
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9094"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+
+      # Listener configuration for both internal (Docker) and external (host) access
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:9093,CONTROLLER://0.0.0.0:9094
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+
+      # Cluster configuration
+      CLUSTER_ID: "pizza-shop-kafka-cluster-2026"
+
+      # Topic defaults - suitable for demo with single broker
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+
+      # Performance tuning for demo system
+      KAFKA_NUM_NETWORK_THREADS: 3
+      KAFKA_NUM_IO_THREADS: 8
+      KAFKA_SOCKET_SEND_BUFFER_BYTES: 102400
+      KAFKA_SOCKET_RECEIVE_BUFFER_BYTES: 102400
+      KAFKA_SOCKET_REQUEST_MAX_BYTES: 104857600
+
+      # Log retention - keep demo data for 7 days
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+
+      # KRaft log directory - using single directory for both data and metadata
+      KAFKA_LOG_DIRS: "/var/lib/kafka/data"
+
+      # JVM heap settings for demo system
+      KAFKA_HEAP_OPTS: "-Xmx1G -Xms1G"
+
+      # Disable auto-creation of topics (we'll create them explicitly)
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "kafka-broker-api-versions",
+          "--bootstrap-server",
+          "localhost:9092",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 40s
+    networks:
+      - pizza-shop-network
+    # Resource limits suitable for demo system
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+
+  # Kafka Init - Creates required topics for pizza shop demo
+  kafka-init:
+    image: confluentinc/cp-kafka:7.7.0
+    container_name: pizza-shop-kafka-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: ["/bin/bash", "/scripts/init-kafka.sh"]
+    volumes:
+      - ./scripts/init-kafka.sh:/scripts/init-kafka.sh:ro
+    networks:
+      - pizza-shop-network
+    restart: on-failure
+
+# Named volumes for data persistence
+volumes:
+  kafka-data:
+    name: pizza-shop-kafka-data
+
+# Dedicated network for pizza shop services
+networks:
+  pizza-shop-network:
+    name: pizza-shop-network
+    driver: bridge

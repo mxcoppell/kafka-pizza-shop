@@ -1,0 +1,56 @@
+# Environment variables (use .env.example as template)
+.env
+
+# Test outputs and temporary test data
+tests/*.tmp
+tests/*.log
+
+# Script outputs
+scripts/*.log
+
+# Docker volumes and data
+/data/
+/logs/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Kafka data (if running locally)
+kafka-logs/
+zookeeper-data/
+
+# Docker volumes
+docker-volumes/
+
+# Test artifacts
+*_TEST_*.md
+PARALLEL_*.md

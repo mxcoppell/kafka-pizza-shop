@@ -1,0 +1,14 @@
+# Kafka Python Client Library
+# Using confluent-kafka-python for better reliability and performance
+confluent-kafka==2.3.0
+
+# Environment variable management
+python-dotenv==1.0.0
+
+# Data validation and type checking (optional but useful)
+# For Python 3.9+ compatibility
+typing-extensions==4.9.0
+
+# Development and testing dependencies (optional, comment out for production)
+# pytest==7.4.3
+# pytest-cov==4.1.0
