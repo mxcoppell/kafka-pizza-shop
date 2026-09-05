@@ -3,7 +3,7 @@
 confluent-kafka==2.3.0
 
 # Environment variable management
-python-dotenv==1.0.0
+python-dotenv==1.2.2
 
 # Data validation and type checking (optional but useful)
 # For Python 3.9+ compatibility
